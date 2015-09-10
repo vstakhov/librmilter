@@ -110,8 +110,16 @@ rmilter_create (struct rmilter_callbacks *callbacks,
 	m = g_slice_alloc0 (sizeof (*m));
 	m->async = async;
 	m->cb = callbacks;
-	m->log = log;
-	m->log_data = log_data;
+
+	if (log == NULL) {
+		m->log = rmilter_logger_internal;
+		m->log_data = m;
+	}
+	else {
+		m->log = log;
+		m->log_data = log_data;
+	}
+
 	m->sessions = g_queue_new ();
 
 	REF_INIT_RETAIN (m, rmilter_milter_dtor);

@@ -28,6 +28,7 @@
 #include "librmilter.h"
 #include "ref.h"
 #include "utlist.h"
+#include "logger.h"
 
 enum rmilter_session_state {
 	len_1,

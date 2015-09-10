@@ -14,6 +14,6 @@ else()
 endif()
 
 set(SOURCE_FILES
-        "${CMAKE_SOURCE_DIR}/src/librmilter.c")
+        "${CMAKE_SOURCE_DIR}/src/librmilter.c" src/logger.c src/logger.h)
 add_library(librmilter ${SOURCE_FILES})
 target_link_libraries(librmilter ${GLIB2_LIBRARIES})
