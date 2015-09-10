@@ -52,6 +52,8 @@ static void *rmilter_libevent_add_periodic (void *priv_data, double after,
 static void rmilter_libevent_del_periodic (void *priv_data, void *ev_data);
 static void rmilter_libevent_repeat_timer (void *priv_data, void *ev_data);
 static void rmilter_libevent_del_timer (void *priv_data, void *ev_data);
+static void rmilter_libevent_stop_event (void *priv_data, void *ev_data);
+static void rmilter_libevent_start_event (void *priv_data, void *ev_data);
 
 struct rmilter_event_periodic_cbdata {
 	struct event *ev;
@@ -73,7 +75,9 @@ rmilter_gen_libevent (struct rmilter_resolver *resolver,
 			.del_periodic = rmilter_libevent_del_periodic,
 			.repeat_timer = rmilter_libevent_repeat_timer,
 			.del_timer = rmilter_libevent_del_timer,
-			.cleanup = NULL
+			.cleanup = NULL,
+			.stop_event = rmilter_libevent_stop_event,
+			.start_event = rmilter_libevent_start_event
 	};
 	struct rmilter_async_context *nctx;
 
@@ -243,6 +247,24 @@ rmilter_libevent_del_timer (void *priv_data, void *ev_data)
 	if (ev != NULL) {
 		event_del (ev);
 		g_slice_free1 (sizeof (*ev), ev);
+	}
+}
+
+static void
+rmilter_libevent_stop_event (void *priv_data, void *ev_data)
+{
+	struct event *ev = ev_data;
+	if (ev != NULL) {
+		event_del (ev);
+	}
+}
+
+static void
+rmilter_libevent_start_event (void *priv_data, void *ev_data)
+{
+	struct event *ev = ev_data;
+	if (ev != NULL) {
+		event_add (ev, NULL);
 	}
 }
 

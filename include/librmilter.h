@@ -144,6 +144,8 @@ struct rmilter_async_context {
 	void* (*add_periodic) (void *priv_data, double after,
 			rmilter_periodic_callback cb, void *user_data);
 	void (*del_periodic) (void *priv_data, void *ev_data);
+	void (*stop_event) (void *priv_data, void *ev_data);
+	void (*start_event) (void *priv_data, void *ev_data);
 	void (*cleanup) (void *priv_data);
 };
 

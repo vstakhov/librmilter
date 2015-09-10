@@ -47,6 +47,8 @@ static void *rmilter_libev_add_periodic (void *priv_data, double after,
 static void rmilter_libev_del_periodic (void *priv_data, void *ev_data);
 static void rmilter_libev_repeat_timer (void *priv_data, void *ev_data);
 static void rmilter_libev_del_timer (void *priv_data, void *ev_data);
+static void rmilter_libev_stop_event (void *priv_data, void *ev_data);
+static void rmilter_libev_start_event (void *priv_data, void *ev_data);
 
 struct rmilter_ev_periodic_cbdata {
 	ev_timer *ev;
@@ -68,7 +70,9 @@ rmilter_gen_libev (struct rmilter_resolver *resolver, struct ev_loop *loop)
 			.del_timer = rmilter_libev_del_timer,
 			.add_periodic = rmilter_libev_add_periodic,
 			.del_periodic = rmilter_libev_del_periodic,
-			.cleanup = NULL
+			.cleanup = NULL,
+			.stop_event = rmilter_libev_stop_event,
+			.start_event = rmilter_libev_start_event
 	};
 	struct rmilter_async_context *nctx;
 	void *ptr;
@@ -226,6 +230,24 @@ rmilter_libev_del_timer (void *priv_data, void *ev_data)
 	if (ev != NULL) {
 		ev_timer_stop ((struct ev_loop *) priv_data, ev);
 		g_slice_free1 (sizeof (*ev), (void *) ev);
+	}
+}
+
+static void
+rmilter_libev_start_event (void *priv_data, void *ev_data)
+{
+	ev_io *ev = (ev_io *) ev_data;
+	if (ev != NULL) {
+		ev_io_start ((struct ev_loop *) priv_data, ev);
+	}
+}
+
+static void
+rmilter_libev_stop_event (void *priv_data, void *ev_data)
+{
+	ev_io *ev = (ev_io *) ev_data;
+	if (ev != NULL) {
+		ev_io_stop ((struct ev_loop *) priv_data, ev);
 	}
 }
 
