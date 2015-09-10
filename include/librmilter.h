@@ -195,6 +195,11 @@ struct rmilter_milter *rmilter_create (struct rmilter_callbacks *callbacks,
 bool rmilter_consume_socket (struct rmilter_milter *milter, int fd,
 		const char *module, const char *id, void *ud);
 
+/**
+ * Destroys milter and all its sessions
+ */
+void rmilter_destroy (struct rmilter_milter *milter);
+
 /* Private functions used by async callbacks */
 void rmilter_process_read (int fd, void *arg);
 void rmilter_process_timer (void *arg);

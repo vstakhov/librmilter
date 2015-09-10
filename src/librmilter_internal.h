@@ -26,5 +26,56 @@
 #define LIBRDNS_LIBMILTER_INTERNAL_H
 
 #include "librmilter.h"
+#include "ref.h"
+#include "utlist.h"
+
+enum rmilter_session_state {
+	len_1,
+	len_2,
+	len_3,
+	len_4,
+	cmd,
+	read_data,
+	send_reply
+};
+
+struct rmilter_command {
+	char cmd;
+	guint cmdlen;
+};
+
+struct rmilter_reply_element {
+	char code;
+	GString *data;
+	struct rmilter_reply_element *next, *prev;
+};
+
+struct rmilter_session {
+	struct rmilter_milter *m;
+	GList *parent_link;
+	const char *module;
+	const char *id;
+	GHashTable *macros;
+	GString *cmd_buf;
+	struct rmilter_reply_element *replies;
+	struct rmilter_command cmd;
+	gint fd;
+	enum rmilter_session_state state;
+	void *ud;
+	void *read_ev;
+	void *write_ev;
+	void *timeout_ev;
+	ref_entry_t ref;
+};
+
+struct rmilter_milter {
+	struct rmilter_callbacks *cb;
+	struct rmilter_async_context *async;
+	rmilter_log_function log;
+	void *log_data;
+	GQueue *sessions;
+	gboolean wanna_die;
+	ref_entry_t ref;
+};
 
 #endif

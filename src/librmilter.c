@@ -26,9 +26,74 @@
 #include "config.h"
 #endif
 
+#include <unistd.h>
 #include "librmilter.h"
 #include "librmilter_internal.h"
 
+static void
+rmilter_session_dtor (void *d)
+{
+	struct rmilter_session *s = d;
+	struct rmilter_reply_element *rep, *tmp;
+	GHashTableIter it;
+	gpointer k, v;
+
+	if (s->read_ev) {
+		s->m->async->del_read (s->m->async->data, s->read_ev);
+	}
+
+	if (s->write_ev) {
+		s->m->async->del_write (s->m->async->data, s->write_ev);
+	}
+
+	if (s->timeout_ev) {
+		s->m->async->del_timer (s->m->async->data, s->timeout_ev);
+	}
+
+	if (s->fd != -1) {
+		close (s->fd);
+	}
+
+	if (s->cmd_buf) {
+		g_string_free (s->cmd_buf, TRUE);
+	}
+
+	if (s->macros) {
+		g_hash_table_iter_init (&it, s->macros);
+
+		while (g_hash_table_iter_next (&it, &k, &v)) {
+			g_string_free (k, TRUE);
+			g_string_free (v, TRUE);
+		}
+
+		g_hash_table_unref (s->macros);
+	}
+
+	DL_FOREACH_SAFE (s->replies, rep, tmp) {
+		if (rep->data) {
+			g_string_free (rep->data, TRUE);
+		}
+
+		g_slice_free1 (sizeof (*rep), rep);
+	}
+
+	g_queue_delete_link (s->m->sessions, s->parent_link);
+
+	/* Release refcount on the parent object */
+	REF_RELEASE (s->m);
+	g_slice_free1 (sizeof (*s), s);
+}
+
+static void
+rmilter_milter_dtor (void *d)
+{
+	struct rmilter_milter *m = d;
+
+	/* At this point we assume that all sessions pending are dead */
+	g_assert (m->sessions->length == 0);
+
+	g_slice_free1 (sizeof (*m), m);
+}
 
 struct rmilter_milter *
 rmilter_create (struct rmilter_callbacks *callbacks,
@@ -37,12 +102,74 @@ rmilter_create (struct rmilter_callbacks *callbacks,
 		void *log_data)
 {
 
-	return NULL;
+	struct rmilter_milter *m;
+
+	g_assert (callbacks != NULL);
+	g_assert (async != NULL);
+
+	m = g_slice_alloc0 (sizeof (*m));
+	m->async = async;
+	m->cb = callbacks;
+	m->log = log;
+	m->log_data = log_data;
+	m->sessions = g_queue_new ();
+
+	REF_INIT_RETAIN (m, rmilter_milter_dtor);
+
+	return m;
 }
 
 bool
 rmilter_consume_socket (struct rmilter_milter *milter, int fd,
 		const char *module, const char *id, void *ud)
 {
-	return FALSE;
+	struct rmilter_session *s;
+
+	g_assert (milter != NULL);
+
+	if (milter->wanna_die) {
+		return false;
+	}
+
+	s = g_slice_alloc0 (sizeof (*s));
+	s->m = milter;
+	s->cmd_buf = g_string_sized_new (64);
+	s->macros = g_hash_table_new ((GHashFunc)g_string_hash,
+			(GEqualFunc)g_string_equal);
+	s->state = len_1;
+	s->fd = fd;
+	s->id = id;
+	s->module = module;
+
+	REF_INIT_RETAIN (s, rmilter_session_dtor);
+	/* Grab reference from the parent */
+	REF_RETAIN (s->m);
+
+	g_queue_push_head (milter->sessions, s);
+	s->parent_link = g_queue_peek_head_link (milter->sessions);
+
+	return true;
+}
+
+void
+rmilter_destroy (struct rmilter_milter *milter)
+{
+	struct rmilter_session *s;
+	GList *cur;
+
+	g_assert (milter != NULL);
+
+	/* Stop new sessions from being added */
+	milter->wanna_die = TRUE;
+	cur = milter->sessions->tail;
+
+	while (cur) {
+		s = cur->data;
+
+		rmilter_session_close (s);
+		cur = g_list_next (cur);
+	}
+
+	/* Release ownership to allow destruction when all sessions are dead */
+	REF_RELEASE (milter);
 }
