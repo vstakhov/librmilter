@@ -26,9 +26,13 @@
 #include "config.h"
 #endif
 
+#include <stdbool.h>
 #include <unistd.h>
 #include "librmilter.h"
 #include "librmilter_internal.h"
+
+static const guint initial_buffer_size = 8192;
+static const gdouble default_io_timeout = 10.0;
 
 static void
 rmilter_session_dtor (void *d)
@@ -121,6 +125,7 @@ rmilter_create (struct rmilter_callbacks *callbacks,
 	}
 
 	m->sessions = g_queue_new ();
+	m->io_timeout = default_io_timeout;
 
 	REF_INIT_RETAIN (m, rmilter_milter_dtor);
 
@@ -141,7 +146,7 @@ rmilter_consume_socket (struct rmilter_milter *milter, int fd,
 
 	s = g_slice_alloc0 (sizeof (*s));
 	s->m = milter;
-	s->cmd_buf = g_string_sized_new (64);
+	s->cmd_buf = g_byte_array_sized_new (initial_buffer_size);
 	s->macros = g_hash_table_new ((GHashFunc)g_string_hash,
 			(GEqualFunc)g_string_equal);
 	s->state = len_1;
@@ -174,10 +179,36 @@ rmilter_destroy (struct rmilter_milter *milter)
 	while (cur) {
 		s = cur->data;
 
+		/* Release the reference owned by milter itself */
 		rmilter_session_close (s);
 		cur = g_list_next (cur);
 	}
 
 	/* Release ownership to allow destruction when all sessions are dead */
 	REF_RELEASE (milter);
+}
+
+void
+rmilter_process_read (int fd, void *arg)
+{
+	struct rmilter_session *s = arg;
+
+	rmilter_session_want_read (s);
+}
+
+void
+rmilter_process_timer (void *arg)
+{
+	struct rmilter_session *s = arg;
+
+	msg_warn_session ("session is closed because of IO timeout");
+	rmilter_session_close (s);
+}
+
+void
+rmilter_process_write (int fd, void *arg)
+{
+	struct rmilter_session *s = arg;
+
+	rmilter_session_want_write (s);
 }

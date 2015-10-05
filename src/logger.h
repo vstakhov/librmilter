@@ -46,7 +46,7 @@ void rmilter_logger_helper (struct rmilter_milter *m,
 #define msg_err_milter(...) do { rmilter_logger_helper (m, \
 	RMILTER_LOG_ERROR, "milter", NULL, G_STRFUNC, __VA_ARGS__); } while (0)
 #define msg_warn_milter(...) do { rmilter_logger_helper (m, \
-	RMILTER_LOG_WARN, "milter", NULL, G_STRFUNC, __VA_ARGS__); } while (0)
+    RMILTER_LOG_WARNING, "milter", NULL, G_STRFUNC, __VA_ARGS__); } while (0)
 #define msg_info_milter(...) do { rmilter_logger_helper (m, \
 	RMILTER_LOG_INFO, "milter", NULL, G_STRFUNC, __VA_ARGS__); } while (0)
 #define msg_debug_milter(...) do { rmilter_logger_helper (m, \
@@ -55,7 +55,7 @@ void rmilter_logger_helper (struct rmilter_milter *m,
 #define msg_err_session(...) do { rmilter_logger_helper (s->m, \
 	RMILTER_LOG_ERROR, s->module, s->id, G_STRFUNC, __VA_ARGS__); } while (0)
 #define msg_warn_session(...) do { rmilter_logger_helper (s->m, \
-	RMILTER_LOG_WARN, s->module, s->id, G_STRFUNC, __VA_ARGS__); } while (0)
+	RMILTER_LOG_WARNING, s->module, s->id, G_STRFUNC, __VA_ARGS__); } while (0)
 #define msg_info_session(...) do { rmilter_logger_helper (s->m, \
 	RMILTER_LOG_INFO, s->module, s->id, G_STRFUNC, __VA_ARGS__); } while (0)
 #define msg_debug_session(...) do { rmilter_logger_helper (s->m, \

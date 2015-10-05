@@ -40,7 +40,7 @@ extern "C" {
 /*
  * Internal rmilter context
  */
-struct rmilter_context;
+struct rmilter_session;
 
 /*
  * The shared milter structure
@@ -81,49 +81,49 @@ struct rmilter_addr {
  */
 struct rmilter_callbacks {
 	/* connection info filter */
-	enum librmilter_reply (*connect) (struct rmilter_context *ctx,
+	enum librmilter_reply (*connect) (struct rmilter_session *ctx,
 			void *priv,
 			const char *hostname,
 			struct rmilter_addr *addr);
 
 	/* SMTP HELO command filter */
-	enum librmilter_reply (*hello) (struct rmilter_context *ctx,
+	enum librmilter_reply (*hello) (struct rmilter_session *ctx,
 			void *priv, const char *helo);
 
 	/* envelope sender filter */
-	enum librmilter_reply (*envfrom) (struct rmilter_context *ctx,
+	enum librmilter_reply (*envfrom) (struct rmilter_session *ctx,
 			void *priv, GPtrArray *from);
 
 	/* envelope recipient filter */
-	enum librmilter_reply (*envrcpt) (struct rmilter_context *ctx,
+	enum librmilter_reply (*envrcpt) (struct rmilter_session *ctx,
 			void *priv, GPtrArray *rcpt);
 
 	/* header filter */
-	enum librmilter_reply (*header) (struct rmilter_context *ctx,
+	enum librmilter_reply (*header) (struct rmilter_session *ctx,
 			void *priv, const char *name, const char *value);
 
 	/* end of header */
-	enum librmilter_reply (*eoh) (struct rmilter_context *ctx,
+	enum librmilter_reply (*eoh) (struct rmilter_session *ctx,
 			void *priv);
 
 	/* body block */
-	enum librmilter_reply (*body) (struct rmilter_context *ctx,
+	enum librmilter_reply (*body) (struct rmilter_session *ctx,
 			void *priv, unsigned char *chunk, unsigned int len);
 
 	/* end of message */
-	enum librmilter_reply (*eom) (struct rmilter_context *ctx,
+	enum librmilter_reply (*eom) (struct rmilter_session *ctx,
 			void *priv);
 
 	/* message aborted */
-	enum librmilter_reply (*abort) (struct rmilter_context *ctx,
+	enum librmilter_reply (*abort) (struct rmilter_session *ctx,
 			void *priv);
 
 	/* connection cleanup */
-	enum librmilter_reply (*close) (struct rmilter_context *ctx,
+	enum librmilter_reply (*close) (struct rmilter_session *ctx,
 			void *priv);
 
 	/* SMTP DATA command filter */
-	enum librmilter_reply (*data) (struct rmilter_context *ctx,
+	enum librmilter_reply (*data) (struct rmilter_session *ctx,
 			void *priv);
 };
 

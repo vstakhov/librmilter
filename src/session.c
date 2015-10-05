@@ -21,64 +21,43 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef LIBRDNS_LIBMILTER_INTERNAL_H
-#define LIBRDNS_LIBMILTER_INTERNAL_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "librmilter.h"
-#include "ref.h"
-#include "utlist.h"
-#include "logger.h"
+#include "librmilter_internal.h"
 #include "session.h"
 
-enum rmilter_session_state {
-	len_1,
-	len_2,
-	len_3,
-	len_4,
-	cmd,
-	read_data,
-	send_reply
-};
+void
+rmilter_session_want_read (struct rmilter_session *s)
+{
+}
 
-struct rmilter_command {
-	char cmd;
-	guint cmdlen;
-};
+void
+rmilter_session_want_write (struct rmilter_session *s)
+{
 
-struct rmilter_reply_element {
-	char code;
-	GString *data;
-	struct rmilter_reply_element *next, *prev;
-};
+}
 
-struct rmilter_session {
-	struct rmilter_milter *m;
-	GList *parent_link;
-	const char *module;
-	const char *id;
-	GHashTable *macros;
-	GByteArray *cmd_buf;
-	struct rmilter_reply_element *replies;
-	struct rmilter_command cmd;
-	gint fd;
-	enum rmilter_session_state state;
-	void *ud;
-	void *read_ev;
-	void *write_ev;
-	void *timeout_ev;
-	ref_entry_t ref;
-};
+void
+rmilter_session_close (struct rmilter_session *s)
+{
+	msg_debug_session ("closing session: %p", s);
 
-struct rmilter_milter {
-	struct rmilter_callbacks *cb;
-	struct rmilter_async_context *async;
-	rmilter_log_function log;
-	void *log_data;
-	GQueue *sessions;
-	gdouble io_timeout;
-	gboolean wanna_die;
-	ref_entry_t ref;
-};
+	if (s->m->cb->close) {
+		s->m->cb->close (s, s->ud);
+	}
 
-#endif
+	/* Release reference that is handled by milter itself */
+	REF_RELEASE (s);
+}
+
+void
+rmilter_session_start (struct rmilter_session *s)
+{
+	s->state = len_1;
+	/* Create read and timeout events */
+	s->m->async->add_read (s->m->async->data, s->fd, s);
+	s->m->async->add_timer (s->m->async->data, s->m->io_timeout, s);
+}
