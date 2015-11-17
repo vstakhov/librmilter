@@ -50,7 +50,7 @@ struct rmilter_milter;
 /*
  * Reply codes
  */
-enum rmilter_reply {
+enum librmilter_reply {
 	RMILTER_REPLY_CONTINUE = 0,
 	RMILTER_REPLY_REJECT = 1,
 	RMILTER_REPLY_DISCARD = 2,

@@ -32,23 +32,24 @@
 #include "session.h"
 
 enum rmilter_session_state {
-	len_1,
-	len_2,
-	len_3,
-	len_4,
-	cmd,
-	read_data,
-	send_reply
+	st_read_cmd,
+	st_len_1,
+	st_len_2,
+	st_len_3,
+	st_len_4,
+	st_read_data,
+	st_send_reply
 };
 
 struct rmilter_command {
 	char cmd;
 	guint cmdlen;
+	GByteArray *data;
 };
 
 struct rmilter_reply_element {
 	char code;
-	GString *data;
+	GByteArray *data;
 	struct rmilter_reply_element *next, *prev;
 };
 

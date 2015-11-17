@@ -59,7 +59,11 @@ rmilter_session_dtor (void *d)
 	}
 
 	if (s->cmd_buf) {
-		g_string_free (s->cmd_buf, TRUE);
+		g_byte_array_free (s->cmd_buf, TRUE);
+	}
+
+	if (s->cmd.data) {
+		g_byte_array_free (s->cmd.data, TRUE);
 	}
 
 	if (s->macros) {
@@ -75,7 +79,7 @@ rmilter_session_dtor (void *d)
 
 	DL_FOREACH_SAFE (s->replies, rep, tmp) {
 		if (rep->data) {
-			g_string_free (rep->data, TRUE);
+			g_byte_array_free (rep->data, TRUE);
 		}
 
 		g_slice_free1 (sizeof (*rep), rep);
@@ -147,9 +151,9 @@ rmilter_consume_socket (struct rmilter_milter *milter, int fd,
 	s = g_slice_alloc0 (sizeof (*s));
 	s->m = milter;
 	s->cmd_buf = g_byte_array_sized_new (initial_buffer_size);
+	s->cmd.data = g_byte_array_sized_new (initial_buffer_size);
 	s->macros = g_hash_table_new ((GHashFunc)g_string_hash,
 			(GEqualFunc)g_string_equal);
-	s->state = len_1;
 	s->fd = fd;
 	s->id = id;
 	s->module = module;
@@ -160,6 +164,7 @@ rmilter_consume_socket (struct rmilter_milter *milter, int fd,
 
 	g_queue_push_head (milter->sessions, s);
 	s->parent_link = g_queue_peek_head_link (milter->sessions);
+	rmilter_session_start (s);
 
 	return true;
 }

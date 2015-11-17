@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.3)
-project(librdns C)
+cmake_minimum_required(VERSION 2.8)
+project(librmilter C)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include_directories("${CMAKE_SOURCE_DIR}/include;${CMAKE_SOURCE_DIR}/src")
@@ -14,6 +14,8 @@ else()
 endif()
 
 set(SOURCE_FILES
-        "${CMAKE_SOURCE_DIR}/src/librmilter.c" src/logger.c src/logger.h src/session.c src/session.h)
+        "${CMAKE_SOURCE_DIR}/src/librmilter.c"
+        src/logger.c
+        src/session.c)
 add_library(librmilter ${SOURCE_FILES})
 target_link_libraries(librmilter ${GLIB2_LIBRARIES})
